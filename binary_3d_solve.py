@@ -229,7 +229,8 @@ def create_nn_graph(T, nodes_per_layer, layers, dropout_rate=0.5,
         batch_norm_dropout = list()
 
         for lyr in range(layers):
-            dense_in = dropout_layer(x_in) if lyr == 0 else batch_norm_dropout[-1]
+            dense_in = dropout_layer(x_in) if lyr == 0 else batch_norm_dropout[
+                -1]
 
             d = dense_layer(dense_in, nodes_per_layer, name=f'dense_{lyr}')
             dense.append(d)
@@ -277,7 +278,8 @@ def create_nn_graph(T, nodes_per_layer, layers, dropout_rate=0.5,
                                                        decay_rate)
 
         # optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate,
-        #                                       momentum=0.9, decay=0.9, epsilon=1e-10)
+        # momentum=0.9,
+        # decay=0.9, epsilon=1e-10)
         optimizer = tf.train.AdamOptimizer()
 
         extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -299,7 +301,6 @@ def create_nn_graph(T, nodes_per_layer, layers, dropout_rate=0.5,
 
     LogDir.reset_logdir()
     file_writer = tf.summary.FileWriter(LogDir.logdir, tf.get_default_graph())
-    file_writer = None
 
     # Count trainable parameters in graph.
     n_trainable_params = np.sum([np.prod(v.get_shape().as_list()) for v in
@@ -341,49 +342,55 @@ def create_data(n_obs):
 
 # Iterate over various neural network architectures as needed.
 def main():
-    n_train_obs = n_val_obs = 1024
+    n_train_obs = n_val_obs = 4096
+    batch_size = 1024
     x_train, y_train = create_data(n_train_obs)
     x_val, y_val = create_data(n_val_obs)
 
     num_layers = range(1, 11)
     nodes_per_layer = [3, 4, 5, 6, 9, 12, 24, 48, 96, 192, 384, 768, 1536]
 
-    outstr = ''
     n_epochs = 2000
-    activation_type = ActivationType.ELU
-    activation_str = 'elu'
 
-    for n_lyrs in reversed(num_layers):
-        for n_nodes in reversed(nodes_per_layer):
-            total_nodes = n_lyrs * n_nodes
+    activations = [(ActivationType.TANH, 'tanh'), (ActivationType.RELU, 'relu'),
+                   (ActivationType.ELU, 'elu')]
 
-            if total_nodes > 4800:
-                continue
+    for activation in activations:
+        activation_type = activation[0]
+        activation_str = activation[1]
+        outstr = ''
 
-            tf_graph_refs, n_trainable_params = create_nn_graph(T=3,
-                                                                nodes_per_layer=n_nodes,
-                                                                layers=n_lyrs,
-                                                                dropout_rate=0.,
-                                                                l2_reg_scale=0.,
-                                                                batch_norm_momentum=0.9,
-                                                                activation_type=activation_type)
+        for n_lyrs in reversed(num_layers):
+            for n_nodes in reversed(nodes_per_layer):
+                total_nodes = n_lyrs * n_nodes
 
-            acc_train, acc_val = train_nn(tf_graph_refs, x_train, y_train,
-                                          x_val, y_val, model_name='model',
-                                          n_epochs=n_epochs, save=False,
-                                          batch_size=n_train_obs)
+                if total_nodes > 4800:
+                    continue
 
-            outstr += f'layers: {n_lyrs}  nodes_per_layer: {n_nodes}  ' \
-                      f'total_nodes: {total_nodes} ' \
-                      f'   acc_train: {acc_train}    acc_val: {acc_val}    ' \
-                      f'trainable parameters: {n_trainable_params}\n'
+                tf_graph_refs, n_trainable_params = create_nn_graph(T=3,
+                                                                    nodes_per_layer=n_nodes,
+                                                                    layers=n_lyrs,
+                                                                    dropout_rate=0.,
+                                                                    l2_reg_scale=0.,
+                                                                    batch_norm_momentum=0.9,
+                                                                    activation_type=activation_type)
 
-    results_path = Path(
-            f"../results/results_trainsize_{n_train_obs}_epochs_{n_epochs}_"
-            f"activation_{activation_str}.txt")
+                acc_train, acc_val = train_nn(tf_graph_refs, x_train, y_train,
+                                              x_val, y_val, model_name='model',
+                                              n_epochs=n_epochs, save=False,
+                                              batch_size=batch_size)
 
-    with open(results_path, mode='w+', encoding="utf8") as f:
-        f.write(outstr)
+                outstr += f'layers: {n_lyrs}  nodes_per_layer: {n_nodes}  ' \
+                          f'total_nodes: {total_nodes} ' \
+                          f'   acc_train: {acc_train}    acc_val: {acc_val}    ' \
+                          f'trainable parameters: {n_trainable_params}\n'
+
+        results_path = Path(
+                f"../results/results_trainsize_{n_train_obs}_epochs_{n_epochs}_"
+                f"activation_{activation_str}.txt")
+
+        with open(results_path, mode='w+', encoding="utf8") as f:
+            f.write(outstr)
 
 
 if __name__ == '__main__':
