@@ -229,8 +229,7 @@ def create_nn_graph(T, nodes_per_layer, layers, dropout_rate=0.5,
         batch_norm_dropout = list()
 
         for lyr in range(layers):
-            dense_in = dropout_layer(x_in) if lyr == 0 else batch_norm_dropout[
-                -1]
+            dense_in = dropout_layer(x_in) if lyr == 0 else batch_norm_dropout[-1]
 
             d = dense_layer(dense_in, nodes_per_layer, name=f'dense_{lyr}')
             dense.append(d)
@@ -278,8 +277,7 @@ def create_nn_graph(T, nodes_per_layer, layers, dropout_rate=0.5,
                                                        decay_rate)
 
         # optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate,
-        # momentum=0.9,
-        # decay=0.9, epsilon=1e-10)
+        #                                       momentum=0.9, decay=0.9, epsilon=1e-10)
         optimizer = tf.train.AdamOptimizer()
 
         extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
