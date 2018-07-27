@@ -316,7 +316,7 @@ def create_nn_graph(T, nodes_per_layer, layers, dropout_rate=0.5,
     return out, n_trainable_params
 
 
-# Make data for the riddle to be solved here.
+# Make data for the math puzzle that is to be solved here.
 #
 # There are 3 feature indices. All values are between 0 and 1.
 #
