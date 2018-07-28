@@ -329,7 +329,7 @@ def create_data(n_obs):
     x = np.random.uniform(size=(n_obs, 3))
 
     up_val = np.zeros((n_obs, 3))
-    up_val[np.where(x >= 0.5)] = 1.
+    up_val[np.where(x > 0.5)] = 1.
     up_val_sum = np.sum(up_val, axis=1)
 
     y = np.zeros((n_obs, 1))
